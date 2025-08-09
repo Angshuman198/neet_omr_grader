@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMR Answer Sheet Evaluator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .upload-label {
+            display: block;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #555;
+            font-size: 1.1em;
+        }
+
+        .file-input-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            background: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .file-input:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .file-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .result.success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .result.error {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+            color: white;
+        }
+
+        .score-display {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .rank-display {
+            font-size: 1.5em;
+            margin: 10px 0;
+        }
+
+        .error-message {
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+
+        .reset-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: white;
+            color: #333;
+        }
+
+        .file-preview {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 OMR Answer Sheet Evaluator</h1>
+        <p class="subtitle">Upload answer key and student sheet for automatic evaluation</p>
+        
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="upload-section">
+                <label class="upload-label">📄 Answer Key (Correct Answers)</label>
+                <input type="file" id="correctAnswers" name="correct_answers" class="file-input" accept="image/*" required>
+                <div id="correctPreview" class="file-preview"></div>
+            </div>
+            
+            <div class="upload-section">
+                <label class="upload-label">📝 Student Answer Sheet</label>
+                <input type="file" id="studentAnswers" name="student_answers" class="file-input" accept="image/*" required>
+                <div id="studentPreview" class="file-preview"></div>
+            </div>
+            
+            <button type="submit" class="submit-btn" id="submitBtn">
+                🚀 Evaluate Answer Sheet
+            </button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing your answer sheets... This may take a few moments.</p>
+        </div>
+        
+        <div class="result" id="result">
+            <div id="successResult" style="display: none;">
+                <h2>📊 Evaluation Complete!</h2>
+                <div class="score-display" id="scoreDisplay"></div>
+                <div class="rank-display" id="rankDisplay"></div>
+                <button class="reset-btn" onclick="resetForm()">Evaluate Another Sheet</button>
+            </div>
+            
+            <div id="errorResult" style="display: none;">
+                <h2>❌ Evaluation Failed</h2>
+                <div class="error-message" id="errorMessage"></div>
+                <button class="reset-btn" onclick="resetForm()">Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // File preview functionality
+        document.getElementById('correctAnswers').addEventListener('change', function(e) {
+            const preview = document.getElementById('correctPreview');
+            if (e.target.files.length > 0) {
+                preview.textContent = `Selected: ${e.target.files[0].name}`;
+            } else {
+                preview.textContent = '';
+            }
+        });
+
+        document.getElementById('studentAnswers').addEventListener('change', function(e) {
+            const preview = document.getElementById('studentPreview');
+            if (e.target.files.length > 0) {
+                preview.textContent = `Selected: ${e.target.files[0].name}`;
+            } else {
+                preview.textContent = '';
+            }
+        });
+
+        // Form submission
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const correctFile = document.getElementById('correctAnswers').files[0];
+            const studentFile = document.getElementById('studentAnswers').files[0];
+            
+            if (!correctFile || !studentFile) {
+                alert('Please select both files');
+                return;
+            }
+            
+            formData.append('correct_answers', correctFile);
+            formData.append('student_answers', studentFile);
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('result').style.display = 'none';
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+                
+                if (data.success) {
+                    // Show success result
+                    document.getElementById('scoreDisplay').textContent = `Score: ${data.marks}`;
+                    document.getElementById('rankDisplay').textContent = `Predicted Rank: ${data.rank}`;
+                    document.getElementById('successResult').style.display = 'block';
+                    document.getElementById('errorResult').style.display = 'none';
+                    document.getElementById('result').className = 'result success';
+                    document.getElementById('result').style.display = 'block';
+                } else {
+                    // Show error result
+                    document.getElementById('errorMessage').textContent = data.error || 'An unknown error occurred';
+                    document.getElementById('successResult').style.display = 'none';
+                    document.getElementById('errorResult').style.display = 'block';
+                    document.getElementById('result').className = 'result error';
+                    document.getElementById('result').style.display = 'block';
+                }
+                
+            } catch (error) {
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+                
+                // Show error result
+                document.getElementById('errorMessage').textContent = 'Network error. Please try again.';
+                document.getElementById('successResult').style.display = 'none';
+                document.getElementById('errorResult').style.display = 'block';
+                document.getElementById('result').className = 'result error';
+                document.getElementById('result').style.display = 'block';
+            }
+        });
+        
+        function resetForm() {
+            document.getElementById('uploadForm').reset();
+            document.getElementById('correctPreview').textContent = '';
+            document.getElementById('studentPreview').textContent = '';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('submitBtn').disabled = false;
+        }
+    </script>
+</body>
+</html>
